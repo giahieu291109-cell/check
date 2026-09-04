@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sleep Check 🌙</title>
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0; min-height:100vh; overflow:hidden; font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;
+ background:radial-gradient(circle at 50% 15%,#29345f 0,#11152f 38%,#070914 100%);
+ color:#fff; display:grid; place-items:center;
+}
+.stars,.stars:before,.stars:after{position:fixed;inset:0;content:"";pointer-events:none}
+.stars{background-image:radial-gradient(#fff 1px,transparent 1px);background-size:83px 83px;opacity:.22}
+.stars:before{background-image:radial-gradient(#fff 1px,transparent 1px);background-size:137px 137px;opacity:.25;transform:translate(25px,17px)}
+.moon{position:fixed;right:8vw;top:8vh;width:90px;height:90px;border-radius:50%;background:#fff8d8;box-shadow:0 0 45px #fff3a7;opacity:.9}
+.moon:after{content:"";position:absolute;background:#151936;width:90px;height:90px;border-radius:50%;left:25px;top:-12px}
+.card{
+ width:min(92vw,520px); min-height:560px; padding:34px 30px; border:1px solid #ffffff18;
+ border-radius:30px; background:#ffffff0c; backdrop-filter:blur(22px);
+ box-shadow:0 25px 80px #0008; position:relative; display:flex; flex-direction:column;
+ justify-content:center; text-align:center;
+}
+.badge{font-size:12px;letter-spacing:3px;text-transform:uppercase;color:#aeb8e9;margin-bottom:15px}
+h1{font-size:35px;margin:0 0 12px;letter-spacing:-1px}
+p{color:#c5cae5;line-height:1.6;margin:8px auto 25px;max-width:410px}
+button{
+ border:0;border-radius:16px;padding:15px 22px;font-size:15px;font-weight:700;cursor:pointer;
+ color:#11152f;background:#f4f0d0;box-shadow:0 8px 25px #0004;transition:.2s;
+}
+button:hover{transform:translateY(-2px);filter:brightness(1.05)}
+.answers{display:grid;gap:12px;margin-top:8px}
+.answers button{background:#ffffff12;color:#fff;border:1px solid #ffffff16;box-shadow:none}
+.answers button:hover{background:#ffffff20}
+.progress{height:8px;background:#ffffff12;border-radius:99px;overflow:hidden;margin:5px 0 26px}
+.bar{height:100%;width:0;background:linear-gradient(90deg,#a8b8ff,#f4f0d0);transition:width .7s ease;border-radius:99px}
+.percent{font-size:48px;font-weight:800;margin:8px 0}
+.result{font-size:14px;color:#bfc6e7}
+.fade{animation:fade .45s ease}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+#mute{position:fixed;left:20px;bottom:20px;width:46px;height:46px;padding:0;border-radius:50%;background:#ffffff12;color:#fff;border:1px solid #ffffff18}
+.small{font-size:12px;color:#858dae;margin-top:18px}
+</style>
+</head>
+<body>
+<div class="stars"></div><div class="moon"></div>
+<button id="mute" title="Âm thanh">🔊</button>
+<main class="card" id="app"></main>
+
+<script>
+const app=document.getElementById('app');
+let sleepy=0, step=0, muted=false, audioCtx=null;
+
+const qs=[
+ ["Bà buồn ngủ chưaaa? 🥺",["Cooo, hơi hơi òi 😴","Chưa, bà còn tỉnh queo ✨"]],
+ ["Bà đang nằm trên giường hongg? 🛏️",["Cooo, nằm ngoan òi ♡","Hongg, bà còn chưa nằm 😭"]],
+ ["Điện thoại vẫn còn trên tay bà hảaa? 📱",["Cooo... bị phát hiện òi 🥹","Hongg nha ✨"]],
+ ["Bà có định nói “5 phút nữa ngủ” hongg? 🌙",["Cooo... 🥹","Hongg nha ✨"]],
+ ["Làm xong cái này bà chịu đi ngủ hongg? 💤",["Cooo, bà hứa 🌙","Hongg nha ✨"]]
+];
+
+function sound(freq=520,dur=.12){
+ if(muted)return;
+ try{
+  audioCtx ||= new (window.AudioContext||window.webkitAudioContext)();
+  const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+  o.frequency.value=freq;o.type='sine';g.gain.setValueAtTime(.045,audioCtx.currentTime);
+  g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+dur);
+  o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+dur);
+ }catch(e){}
+}
+function renderStart(){
+ app.innerHTML=`<div class="fade">
+ <div class="badge">Sleepy Check ♡</div>
+ <h1>🐻‍❄️ Kiểm tra xem bạn buồn ngủ chưa</h1>
+ <p>Trả lời thật lòng nha 🥺<br>Xem thử hôm nay bạn buồn ngủ tới đâu rồi.</p>
+ <button id="start">🌷 Bắt đầu thôi</button>
+ <div class="small">Chỉ một chút xíu thôi • trả lời thật nha ♡</div></div>`;
+ document.getElementById('start').onclick=()=>{sound(660,.18);step=0;sleepy=0;renderQ()}
+}
+function renderQ(){
+ const q=qs[step];
+ app.innerHTML=`<div class="fade">
+ <div class="badge">Câu ${step+1} / ${qs.length} 🌷</div>
+ <div class="progress"><div class="bar" style="width:${sleepy}%"></div></div>
+ <h1>${q[0]}</h1>
+ <div class="answers">${q[1].map((x,i)=>`<button data-i="${i}">${x}</button>`).join('')}</div>
+ </div>`;
+ app.querySelectorAll('button').forEach(b=>b.onclick=()=>{
+   const i=+b.dataset.i;
+   sound(i===0?660:430,.1);
+   if(step===0 && i===0)sleepy+=25;
+   else if(step===1 && i===0)sleepy+=25;
+   else if(step===2 && i===0)sleepy+=15;
+   else if(step===3 && i===0)sleepy+=25;
+   else if(step===4 && i===0)sleepy+=10;
+   sleepy=Math.min(100,sleepy);
+   if(step===2 && i===0){ /* deliberately harmless teasing */ }
+   if(step===4 && i===1){
+     app.innerHTML=`<div class="fade"><div class="badge">Kết quả bị lỗi</div><h1>😐 Hongg nha ✨ tin.</h1><p>Bà vừa làm nguyên bài kiểm tra xong lại bảo hongg muốn ngủ... 😭<br>Thôi lần này đi ngủ thiệt đii nhaaa?</p><button id="again">THỬ LẠI NÈ BÀ ♡</button></div>`;
+     document.getElementById('again').onclick=()=>{step=0;sleepy=0;renderQ()}; return;
+   }
+   step++;
+   step<qs.length?renderQ():finish();
+ });
+}
+function finish(){
+ app.innerHTML=`<div class="fade">
+ <div class="badge">Kết quả của bà đây ♡</div>
+ <div class="percent">99.8%</div>
+ <div class="result">Độ buồn ngủ của bà</div>
+ <div class="progress" style="margin-top:22px"><div class="bar" id="finalbar"></div></div>
+ <h1>🌙 Bà buồn ngủ lắm òii đóoo.</h1>
+ <p>Thôi hôm nay tới đây thuiii nha.<br>Đắp chăn rồi ngủ ngoan đi bàaa ♡</p>
+ <button id="sleep">NGỦ THÔI BÀAA 💤</button>
+ </div>`;
+ setTimeout(()=>document.getElementById('finalbar').style.width='99.8%',100);
+ document.getElementById('sleep').onclick=()=>{sound(740,.25);goodnight()}
+}
+function goodnight(){
+ app.innerHTML=`<div class="fade">
+ <div class="badge">🌙 Sleepy Mode</div>
+ <h1>🌙 Ngủ ngon nha</h1>
+ <p>Đặt điện thoại xuống nhé.<br>Hongg nha ✨ cần nghĩ thêm gì nữa.</p>
+ <div class="percent">zzz</div>
+ <div class="small">Đang ru bà ngủ nèee... 💤</div>
+ </div>`;
+ document.body.style.transition='2s';document.body.style.filter='brightness(.72)';
+ setTimeout(()=>sound(392,.8),400);
+}
+document.getElementById('mute').onclick=()=>{muted=!muted;document.getElementById('mute').textContent=muted?'🔇':'🔊'};
+renderStart();
+</script>
+</body>
+</html>
