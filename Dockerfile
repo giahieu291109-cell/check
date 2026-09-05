@@ -1,3 +1,5 @@
 FROM nginx:alpine
-COPY sleep_check.html /usr/share/nginx/html/index.html
+
+COPY tiem_ngu_ngoan.html /usr/share/nginx/html/index.html
+
 EXPOSE 80
