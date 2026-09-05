@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tiệm Ngủ Ngoan 🌙</title>
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0; min-height:100vh; overflow:hidden;
+  font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+  background:radial-gradient(circle at 50% 20%,#26365d 0,#11182d 42%,#070b18 100%);
+  color:#fff; display:flex; align-items:center; justify-content:center;
+}
+.stars,.stars:before,.stars:after{position:absolute;inset:0;content:"";pointer-events:none}
+.stars{background-image:
+ radial-gradient(#fff 1px,transparent 1px),
+ radial-gradient(#fff 1px,transparent 1px);
+ background-size:87px 91px,131px 137px;
+ background-position:10px 20px,50px 70px;opacity:.45}
+.moon{
+ position:absolute;right:9%;top:8%;width:85px;height:85px;border-radius:50%;
+ background:#fff5c7;box-shadow:0 0 45px #fff0a0;opacity:.9;
+}
+.moon:after{content:"";position:absolute;background:#11182d;width:82px;height:82px;border-radius:50%;left:24px;top:-10px}
+.scene{position:relative;width:min(430px,92vw);text-align:center;z-index:2}
+.shop{
+ position:relative;margin:auto;width:300px;height:350px;
+ background:#1b233b;border:5px solid #0b1020;border-radius:18px 18px 8px 8px;
+ box-shadow:0 25px 60px #0009,0 0 35px #f5c76a22;
+ overflow:hidden;
+}
+.roof{height:55px;background:#343d5c;border-bottom:5px solid #0b1020;position:relative}
+.roof:before,.roof:after{content:"";position:absolute;top:-17px;width:65px;height:35px;background:#343d5c;border:5px solid #0b1020;border-bottom:0}
+.roof:before{left:-25px;transform:skewX(-25deg)}.roof:after{right:-25px;transform:skewX(25deg)}
+.sign{
+ margin:10px auto 0;width:230px;padding:10px 5px;border-radius:9px;
+ background:#f4d487;color:#202033;border:4px solid #101529;
+ font-weight:900;letter-spacing:1px;box-shadow:0 0 20px #f4d48744;
+}
+.sign small{display:block;font-weight:600;letter-spacing:0;margin-top:2px}
+.window{
+ position:absolute;left:38px;right:38px;top:125px;height:145px;
+ background:#11182b;border:6px solid #090e1b;border-radius:10px;
+ box-shadow:inset 0 0 35px #f8cf6a11;transition:.7s;
+}
+.window.lit{background:linear-gradient(#6b5736,#3d2e20);box-shadow:inset 0 0 45px #ffd87855}
+.cross1,.cross2{position:absolute;background:#090e1b}.cross1{width:6px;left:50%;top:0;bottom:0}.cross2{height:6px;left:0;right:0;top:50%}
+.door{
+ position:absolute;bottom:0;left:102px;width:96px;height:105px;
+ background:#292f4a;border:6px solid #090e1b;border-bottom:0;border-radius:10px 10px 0 0;
+ transform-origin:left center;transition:1s cubic-bezier(.2,.8,.2,1);
+}
+.door.open{transform:perspective(500px) rotateY(-105deg)}
+.knob{position:absolute;right:13px;top:53px;width:9px;height:9px;background:#f5d477;border-radius:50%}
+.doorText{position:absolute;inset:17px 8px auto;font-size:10px;color:#d8dced;line-height:1.4}
+.message{
+ margin-top:24px;min-height:125px;padding:22px 20px;border-radius:20px;
+ background:#ffffff0d;border:1px solid #ffffff18;backdrop-filter:blur(10px);
+}
+h1{font-size:25px;margin:0 0 8px}.sub{color:#cbd2e8;margin:0;line-height:1.5}
+button{
+ margin-top:18px;border:0;border-radius:999px;padding:14px 25px;
+ font-size:16px;font-weight:800;color:#242033;background:#f5d27e;
+ box-shadow:0 7px 25px #f5d27e33;cursor:pointer;transition:.2s;
+}
+button:active{transform:scale(.95)}
+.hidden{display:none}
+.toast{position:fixed;top:8%;left:50%;transform:translateX(-50%);font-weight:700;opacity:0;transition:.35s;z-index:5}
+.toast.show{opacity:1}
+.heart{position:fixed;font-size:18px;animation:float 2.5s linear forwards;pointer-events:none}
+@keyframes float{to{transform:translateY(-180px) rotate(25deg);opacity:0}}
+</style>
+</head>
+<body>
+<div class="stars"></div><div class="moon"></div>
+<div class="toast" id="toast">🌙 cốc cốc...</div>
+
+<main class="scene">
+  <div class="shop">
+    <div class="roof"></div>
+    <div class="sign">🏪 TIỆM NGỦ NGOAN<small>Hôm nay đã hết giờ hoạt động</small></div>
+    <div class="window" id="window"><div class="cross1"></div><div class="cross2"></div></div>
+    <div class="door" id="door"><div class="doorText">ĐÃ<br>ĐÓNG<br>CỬA</div><div class="knob"></div></div>
+  </div>
+
+  <section class="message">
+    <h1 id="title">Tiệm hôm nay đóng cửa rồi bà ơi 😭</h1>
+    <p class="sub" id="text">Bà tới muộn quá rồi. Nhưng mà... thử gõ cửa xem?</p>
+    <button id="btn">🚪 Gõ cửa</button>
+  </section>
+</main>
+
+<script>
+let count=0;
+const title=document.getElementById('title'), text=document.getElementById('text');
+const btn=document.getElementById('btn'), door=document.getElementById('door');
+const win=document.getElementById('window'), toast=document.getElementById('toast');
+
+function pop(msg){
+ toast.textContent=msg; toast.classList.add('show');
+ setTimeout(()=>toast.classList.remove('show'),900);
+}
+function hearts(){
+ for(let i=0;i<9;i++){
+  const h=document.createElement('div'); h.className='heart';
+  h.textContent=['✨','⭐','🤍','🌙'][Math.floor(Math.random()*4)];
+  h.style.left=(35+Math.random()*30)+'%'; h.style.top=(48+Math.random()*20)+'%';
+  h.style.animationDelay=(Math.random()*.5)+'s'; document.body.appendChild(h);
+  setTimeout(()=>h.remove(),3000);
+ }
+}
+btn.onclick=()=>{
+ count++;
+ if(count===1){
+  pop('cốc cốc...');
+  title.textContent='*cốc cốc cốc* 👀';
+  text.textContent='Ai giờ này còn chưa ngủ vậy bà...';
+  btn.textContent='🚪 Gõ tiếp';
+ }else if(count===2){
+  pop('tui biết bà còn thức 😭');
+  title.textContent='Bà tưởng tui không biết hả 😭';
+  text.textContent='Giờ này rồi mà vẫn còn đứng trước tiệm. Vào lần cuối thôi đó nha.';
+  btn.textContent='🔑 Xin mở cửa';
+ }else{
+  door.classList.add('open'); win.classList.add('lit');
+  title.textContent='ĐẶC BIỆT CHO BÀ 🌙';
+  text.innerHTML='Hôm nay tới đây thôi nha bà.<br>Đi ngủ ngoan, đắp chăn cho ấm,<br>để mai còn có sức quậy tiếp cóo 😭<br><b>Ngủ ngoan hongg 🌙🤍</b>';
+  btn.textContent='🌙 Đóng tiệm';
+  hearts();
+  btn.onclick=()=>{
+    door.classList.remove('open'); win.classList.remove('lit');
+    title.textContent='Tiệm đóng cửa thật rồi 🚪';
+    text.textContent='Mai quay lại nha bà. Giờ thì đi ngủ ngoan cóo 🌙';
+    btn.remove();
+  };
+ }
+};
+</script>
+</body>
+</html>
